@@ -8,7 +8,7 @@ def f1(modules):
             and modules["c2"]
         )
         and (modules["b1"] or modules["b2"])
-        and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+        and (modules["pr1"] or modules["pr2"])
     )
 
 
@@ -21,7 +21,7 @@ def f2(modules):
             (
                 modules["a1"]
                 and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and modules["pr3"]
             ) or (
                 modules["a2"]
                 and (modules["b3"] or modules["b5"])
@@ -36,16 +36,7 @@ def f3(modules):
         (modules["d7"] or modules["d8"])
         and modules["c5"]
         and modules["b3"]
-        and (
-            modules["pr6"]
-            or (
-                modules["a2"]
-                and modules["m1"]
-                and modules["a1"]
-                and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
-            )
-        )
+        and modules["pr6"]
     )
 
 
@@ -63,7 +54,7 @@ def f4(modules):
                 and modules["m1"]
                 and modules["a1"]
                 and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and modules["pr2"] or modules["pr3"]
             )
         )
     )
@@ -87,7 +78,7 @@ def f2_mod(modules):
             (
                 modules["a1"]
                 and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and modules["pr3"]
             ) or (
                 modules["a2"]
                 and (modules["b3"] or modules["b5"])
@@ -103,11 +94,7 @@ def f3_mod(modules):
         and (modules["c6"] and (modules["b3"] or modules["b4"]) and modules["pr6"] or (
                 (modules["c5"] or modules["c6"])
                 and modules["b3"]
-                and modules["a2"]
-                and (modules["m1"] or modules["m2"])
-                and modules["a1"]
-                and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and modules["pr6"]
             )
         )
     )
@@ -129,7 +116,7 @@ def f4_mod(modules):
                 and modules["a2"]
                 and (modules["m1"] or modules["m2"])
                 and modules["a1"]
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and (modules["pr2"] or modules["pr3"])
             )
         )
     )
@@ -153,7 +140,7 @@ def f2_mod2(modules):
             (
                 modules["a1"]
                 and (modules["b1"] or modules["b2"])
-                and (modules["pr1"] or modules["pr2"] or modules["pr3"])
+                and modules["pr3"]
             ) or (
                 modules["a2"]
                 and (modules["b3"] or modules["b5"])
