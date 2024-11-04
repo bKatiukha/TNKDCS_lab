@@ -91,7 +91,7 @@ def f2_mod(modules):
 def f3_mod(modules):
     return (
         (modules["d7"] or modules["d8"])
-        and (modules["c6"] and (modules["b3"] or modules["b4"]) and modules["pr6"] or (
+        and ((modules["c6"] and (modules["b3"] or modules["b4"]) and modules["pr6"]) or (
                 (modules["c5"] or modules["c6"])
                 and modules["b3"]
                 and modules["pr6"]
