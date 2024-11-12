@@ -46,6 +46,14 @@ def print_result(calculator, use_active_failover=False):
     visualize_errors_chart(calculator._statistics, chart_title)
 
 
+def print_improvement_probabilities(probability, mod_probability, label):
+    mod_probability_result = ((1 - probability - (1 - mod_probability)) / (1 - mod_probability) * 100)
+    mod_probability_result1 = (1 - probability) / (1 - mod_probability)
+
+    print(f'зменшення непрацездатності системи {label} на {mod_probability_result} %')
+    print(f'зменшення непрацездатності системи {label} в {mod_probability_result1} рази')
+
+
 if __name__ == '__main__':
     calculator = ReliabilityCalculator(
         data.elements,
@@ -68,18 +76,11 @@ if __name__ == '__main__':
 
     mod_probability_without_active_failover = calculator_mod.calculate_reliability()
     print_result(calculator_mod, False)
-
-    mod_probability = ((1 - probability_without_active_failover - (1 - mod_probability_without_active_failover)) /
-                       (1 - mod_probability_without_active_failover) * 100)
-
-    print(f'зменшення непрацездатності системи mod1 на {mod_probability} %')
+    print_improvement_probabilities(probability_without_active_failover, mod_probability_without_active_failover, 'mod1')
 
     mod_probability_with_active_failover = calculator_mod.calculate_reliability(use_active_failover=True)
     print_result(calculator_mod, True)
-
-    mod_probability_failover = ((1 - probability_without_active_failover - (1 - mod_probability_with_active_failover)) /
-                                (1 - mod_probability_with_active_failover) * 100)
-    print(f'зменшення непрацездатності системи mod1 на {mod_probability_failover} %')
+    print_improvement_probabilities(probability_with_active_failover, mod_probability_with_active_failover, 'mod1')
 
     #
     calculator_mod2 = ReliabilityCalculator(
@@ -90,15 +91,8 @@ if __name__ == '__main__':
 
     mod2_probability_without_active_failover = calculator_mod2.calculate_reliability()
     print_result(calculator_mod2, False)
-
-    mod2_probability = ((1 - probability_without_active_failover - (1 - mod2_probability_without_active_failover)) /
-                        (1 - mod2_probability_without_active_failover) * 100)
-    print(f'зменшення непрацездатності системи mod1 на {mod2_probability} %')
+    print_improvement_probabilities(probability_without_active_failover, mod2_probability_without_active_failover, 'mod2')
 
     mod2_probability_with_active_failover = calculator_mod2.calculate_reliability(use_active_failover=True)
     print_result(calculator_mod2, True)
-
-    mod2_probability_failover = (
-                (1 - probability_without_active_failover - (1 - mod2_probability_with_active_failover)) /
-                (1 - mod2_probability_with_active_failover) * 100)
-    print(f'зменшення непрацездатності системи mod2 на {mod2_probability_failover} %')
+    print_improvement_probabilities(probability_with_active_failover, mod2_probability_with_active_failover, 'mod2')

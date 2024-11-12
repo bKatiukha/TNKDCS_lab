@@ -113,52 +113,77 @@ class ReliabilityCalculator(object):
         return sum(self._reliabilities)
 
     def can_load_be_redistributed(self, table_of_states):
-        interesting_modules = {key for key in table_of_states.keys() if key in self._load_table.keys() and not table_of_states[key]}
+        # Вибір модулів, що відмовили і які присутні в обох таблицях - у поточному стані та в таблиці навантаження
+        interesting_modules = {key for key in table_of_states.keys() if
+                               key in self._load_table.keys() and not table_of_states[key]}
+
+        # Якщо немає жодного модуля, що відмовив, перерозподіл не потрібен, повертаємо False
         if len(interesting_modules) == 0:
             return False
+
+        # Створюємо таблицю перерозподілу навантаження для кожного з модуля
+        # Визначаємо для кожного відмовленого модуля, на які інші модулі можна перенести його навантаження
         table_of_redistribution = {
             key: frozenset(
-                redistribution_target for redistribution_target in self._load_table[key]['redistributions'] if
-                redistribution_target not in interesting_modules
+                redistribution_target for redistribution_target in self._load_table[key]['redistributions']
+                if redistribution_target not in interesting_modules
             ) for key in interesting_modules
-            }
-        # Вдруг для некоторых отказавших модулей вообще нельзя перераспределить нагрузку (отказали модули-дублёры)?
+        }
+
+        # Перевірка: чи всі відмовлені модулі мають хоча б одну можливість для перерозподілу
         if len(table_of_redistribution) != len(interesting_modules):
             return False
-        # 0. Вдруг некоторые модули уже в номинале загружены так сильно, что их заменить никак нельзя?
+
+        # Перевірка: чи достатньо навантаження можна компенсувати на інших модулях
+        # Для кожного модуля перевіряємо, чи сумарне допустиме навантаження на доступних модулях не менше
+        # його номінального навантаження
         for key in table_of_redistribution.keys():
             if sum(
                     self._load_table[key]['redistributions'][target] for target in table_of_redistribution[key]
             ) < self._load_table[key]['nominal_load']:
                 return False
+
+        # Ініціалізація словника, що відслідковує поточне навантаження для кожного відмовленого модуля
         current_load = {key: self._load_table[key]['nominal_load'] for key in table_of_redistribution.keys()}
-        # 1. Нагрузку с отказавших модулей сначала перераспределим на такие модули,
-        # которыми можно заменить только и только отказавший.
+
+        # Початковий перерозподіл: навантаження на унікальні замінні модулі
+        # Унікальні заміни - це ті, які є єдиною можливістю перерозподілу для конкретного модуля, що відмовив
         unique_alternatives = {}
         for key in table_of_redistribution.keys():
             unique_alternatives[key] = table_of_redistribution[key]
             for temp_key in table_of_redistribution.keys():
                 if temp_key != key:
                     unique_alternatives[key] -= table_of_redistribution[temp_key]
+
+        # Перерозподіл навантаження на унікальні модулі
         for key in table_of_redistribution.keys():
             for target in unique_alternatives[key]:
                 current_load[key] -= min(
                     self._load_table[target]['max_load'] - self._load_table[target]['nominal_load'],
-                    self._load_table[key]['redistributions'][target])
-        # 1.1 Может, этого хватило?
+                    self._load_table[key]['redistributions'][target]
+                )
+
+        # Перевірка: чи вдалося повністю розподілити навантаження серед унікальних альтернатив
         if all(current_load[key] <= 0 for key in current_load.keys()):
             return True
-        # 2. Теперь попытаемся распределить нагрузку на оставшиеся работоспособные модули.
-        # 2.1. Забудем о тех, которых уже удовлетворили.
+
+        # Видаляємо зі списку перерозподілу ті модулі, які вже повністю компенсували своє навантаження
         for key in interesting_modules:
             if current_load[key] <= 0:
                 current_load.pop(key, None)
                 table_of_redistribution.pop(key, None)
-        # 2.2. Если остался один неудовлетворённый, то и скатертью ему дорога (в пункте 0 проверили, что всё ОК).
+
+        # Якщо залишився лише один модуль, що потребує компенсації, то достатньо можливостей для
+        # розподілу, повертаємо True
         if len(current_load) <= 1:
             return True
-        # 2.3. Подсчитаем, сколько у нас есть.
-        current_possibilities = {key: self._load_table[key]['max_load'] - self._load_table[key]['nominal_load'] for key in self._load_table.keys() if key not in interesting_modules}
+
+        # Оцінюємо загальну можливість для компенсації - визначаємо максимальне доступне навантаження на всіх
+        # працездатних модулях
+        current_possibilities = {key: self._load_table[key]['max_load'] - self._load_table[key]['nominal_load']
+                                 for key in self._load_table.keys() if key not in interesting_modules}
+
+        # Видаляємо можливості для тих модулів, які не можуть допомогти жодному відмовленому модулю
         for key in list(current_possibilities.keys()):
             found = False
             for failed in current_load.keys():
@@ -167,9 +192,13 @@ class ReliabilityCalculator(object):
                         found = True
             if not found:
                 current_possibilities.pop(key, None)
-        # 2.4. Может, у нас возможностей вообще меньше, чем желаний?
+
+        # Перевірка: чи можливостей на працюючих модулях достатньо для покриття сумарного
+        # навантаження відмовлених модулів
         if sum(current_load.values()) > sum(current_possibilities.values()):
             return False
+
+        # Якщо всі перевірки пройдені, перерозподіл навантаження можливий
         return True
 
     def _add_new_bad_state(self, bad_states, count_of_failures, count_of_elements):
